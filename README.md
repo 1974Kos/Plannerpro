@@ -1,2 +1,0 @@
-# Plannerpro
-Planificare

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#f0f4ff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="PlannerPro"/>
+<title>PlannerPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f0f4ff;font-family:'Nunito',sans-serif;-webkit-tap-highlight-color:transparent}
+input,select,textarea,button{font-family:'Nunito',sans-serif}
+.header{background:white;border-bottom:1.5px solid #e9ecef;padding:16px 20px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(116,143,252,0.08)}
+.title{font-family:'Syne',sans-serif;font-size:26px;background:linear-gradient(135deg,#748ffc,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#adb5bd;font-size:12px;font-weight:600;margin-top:2px}
+.btn-add{background:linear-gradient(135deg,#748ffc,#cc5de8);border:none;border-radius:12px;color:white;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(116,143,252,0.35)}
+.search{width:100%;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:12px;color:#1a1a2e;padding:10px 14px;font-size:13px;outline:none;margin-top:12px}
+.content{max-width:600px;margin:0 auto;padding:16px}
+.chip{border-radius:20px;padding:6px 13px;font-size:12px;cursor:pointer;font-weight:700;white-space:nowrap;transition:all 0.15s;border:1.5px solid #e9ecef;background:#f8f9fa;color:#868e96}
+.chip.active{background:rgba(116,143,252,0.1);border-color:#748ffc;color:#748ffc}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.card{background:white;border-radius:16px;padding:14px 16px;margin-bottom:10px;transition:all 0.2s}
+.modal-bg{position:fixed;inset:0;background:rgba(26,26,46,0.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:white;border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:#dee2e6;border-radius:2px;margin:0 auto 24px}
+.inp{width:100%;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:10px;color:#1a1a2e;padding:11px 14px;font-size:14px;outline:none}
+.lbl{color:#868e96;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.notif-box{background:#f0f2ff;border-radius:14px;padding:14px 16px}
+.counter-btn{border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.alert-expired{background:#fff0f0;border:1.5px solid #ffc9c9;border-radius:14px;padding:12px 16px;margin-bottom:8px}
+.alert-soon{background:#fffbf0;border:1.5px solid #ffe066;border-radius:14px;padding:12px 16px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.stat-card{border-radius:14px;padding:14px 12px;text-align:center}
+.empty{text-align:center;color:#adb5bd;padding:50px 0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="max-width:600px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div class="title">PlannerPro</div>
+        <div class="subtitle" id="subtitle">0 active · 0 finalizate</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="notif-btn" onclick="requestNotif()" style="background:#fffbf0;border:1.5px solid #fcc419;border-radius:12px;color:#f59f00;padding:9px 12px;font-size:12px;cursor:pointer;font-weight:700;display:none">🔔 Activează</button>
+        <span id="notif-ok" style="font-size:20px;display:none">🔔</span>
+        <button class="btn-add" onclick="openForm()">+ Adaugă</button>
+      </div>
+    </div>
+    <input class="search" placeholder="🔍  Caută..." oninput="render()" id="search"/>
+  </div>
+</div>
+
+<div class="content">
+  <div class="chips" id="cat-chips"></div>
+  <div class="chips" id="status-chips"></div>
+  <div id="alerts"></div>
+  <div id="tasks-list"></div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+      <h2 id="form-title" style="font-family:'Syne',sans-serif;font-size:22px;color:#1a1a2e"></h2>
+      <button onclick="closeForm()" style="background:#f8f9fa;border:none;border-radius:10px;color:#868e96;cursor:pointer;padding:8px 12px;font-size:16px">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <label class="lbl">Titlu *</label>
+        <input class="inp" id="f-title" placeholder="Ex: Asigurare auto, Concert..."/>
+      </div>
+      <div>
+        <label class="lbl">Categorie</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="cat-btns"></div>
+      </div>
+      <div>
+        <label class="lbl">Descriere</label>
+        <textarea class="inp" id="f-desc" style="height:72px;resize:vertical" placeholder="Detalii opționale..."></textarea>
+      </div>
+      <div class="grid2">
+        <div><label class="lbl">Data</label><input type="date" class="inp" id="f-date" oninput="toggleNotif()"/></div>
+        <div><label class="lbl">Ora evenimentului</label><input type="time" class="inp" id="f-time"/></div>
+      </div>
+      <div class="notif-box" id="notif-section" style="display:none">
+        <label class="lbl" style="color:#748ffc;margin-bottom:12px">🔔 Notifică-mă cu...</label>
+        <div class="grid3">
+          <div>
+            <label class="lbl" style="font-size:10px">Zile</label>
+            <div style="display:flex;align-items:center;gap:4px">
+              <button class="counter-btn" style="background:white;border:1.5px solid #dee2e6;color:#748ffc" onclick="dec('f-days',1)">−</button>
+              <span id="f-days" style="font-weight
